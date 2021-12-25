@@ -10,14 +10,13 @@ const App = () => {
 
   // ping the server to check if it's up
   useEffect(() => {
-    fetch('/ping')
+    fetch(`${process.env.REACT_APP_SERVER_URL}/ping`)
       .then((res) => res.json())
       .then((data) => console.log(data));
   }, []);
 
   useEffect(() => {
-    // defaults to `http://${window.location.hostname}:3000`
-    const newSocket = io();
+    const newSocket = io(`${process.env.REACT_APP_SERVER_URL}`);
     setSocketClient(newSocket);
     // close the socket connection when this component unmounts
     return () => newSocket.close();
