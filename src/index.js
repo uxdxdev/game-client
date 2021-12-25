@@ -12,7 +12,8 @@ const App = () => {
   useEffect(() => {
     fetch(`${process.env.REACT_APP_SERVER_URL}/ping`)
       .then((res) => res.json())
-      .then((data) => console.log(data));
+      .then((data) => console.log(data))
+      .catch((err) => console.log(err));
   }, []);
 
   useEffect(() => {
