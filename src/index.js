@@ -1,7 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import ReactDOM from 'react-dom';
 import io from 'socket.io-client';
-import { customEvents, socketIoEvents } from './constants';
+
+const events = {
+  CONNECTED: 'connected',
+  NUMBER_OF_CONNECTED_CLIENTS: 'number_of_connected_clients',
+  CONNECTION_ERROR: 'connect_error',
+};
 
 const App = () => {
   const [socketClient, setSocketClient] = useState(null);
@@ -10,28 +15,48 @@ const App = () => {
 
   // ping the server to check if it's up
   useEffect(() => {
-    fetch(`${process.env.REACT_APP_SERVER_URL}/ping`)
-      .then((res) => res.json())
-      .then((data) => console.log(data))
-      .catch((err) => console.log(err));
+    fetch(`${process.env.REACT_APP_SERVER_URL}/ping`).catch((err) =>
+      console.log(err)
+    );
   }, []);
 
+  // connect to the server and store socket connection
   useEffect(() => {
-    const newSocket = io(`${process.env.REACT_APP_SERVER_URL}`);
+    const newSocket = io(`${process.env.REACT_APP_SERVER_URL}`, {
+      // send auth token to authenticate with server
+      auth: {
+        token: 'test',
+      },
+    });
     setSocketClient(newSocket);
+
     // close the socket connection when this component unmounts
     return () => newSocket.close();
   }, [setSocketClient]);
 
+  // catch any errors when connecting to server
   useEffect(() => {
     if (socketClient) {
-      // store client.id when connected
-      socketClient.on(socketIoEvents.CONNECTED, (id) => {
+      socketClient.on(events.CONNECTION_ERROR, (err) => {
+        console.log(err.message);
+      });
+    }
+  }, [socketClient]);
+
+  // store client id when connected
+  useEffect(() => {
+    if (socketClient) {
+      socketClient.on(events.CONNECTED, (id) => {
         setClientId(id);
       });
+    }
+  }, [socketClient]);
 
+  // listen for number of connected clients
+  useEffect(() => {
+    if (socketClient) {
       socketClient.on(
-        customEvents.NUMBER_OF_CONNECTED_CLIENTS,
+        events.NUMBER_OF_CONNECTED_CLIENTS,
         (numberOfConnectedClients) => {
           setNumberOfClients(numberOfConnectedClients);
         }
