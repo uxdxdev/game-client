@@ -35,7 +35,6 @@ const events = {
 
 const App = () => {
   const [socketClient, setSocketClient] = useState(null);
-  const [numberOfClients, setNumberOfClients] = useState(0);
   const [authToken, setAuthToken] = useState(null);
   const [userId, setUserId] = useState(null);
   const [isServerAuthed, setIsServerAuthed] = useState(null);
@@ -47,7 +46,6 @@ const App = () => {
   const drawingCanvas = useRef();
   const canvasContext = useRef();
   const canvasContainer = useRef();
-  const initCanvasState = useRef();
 
   useEffect(() => {
     setColor('#' + (Math.random().toString(16) + '00000').slice(2, 8));
@@ -67,18 +65,16 @@ const App = () => {
     const canvas = drawingCanvas.current;
     const context = canvas.getContext('2d');
     canvasContext.current = context;
-    let pointerIdArray = [];
 
     const handleMouseDown = (e) => {
       x.current = e.offsetX;
       y.current = e.offsetY;
       isDrawing.current = true;
-      pointerIdArray.push(e.pointerId);
     };
     canvas.addEventListener('pointerdown', handleMouseDown);
 
     const handleMouseMove = (e) => {
-      if (isDrawing.current === true && e.pointerId === pointerIdArray[0]) {
+      if (isDrawing.current === true) {
         const data = {
           x1: x.current,
           y1: y.current,
@@ -102,9 +98,6 @@ const App = () => {
         x.current = 0;
         y.current = 0;
         isDrawing.current = false;
-        pointerIdArray = pointerIdArray.filter(
-          (pointerId) => pointerId !== e.pointerId
-        );
       }
     };
     window.addEventListener('pointerup', handleMouseUp);
@@ -112,8 +105,6 @@ const App = () => {
     const handleWindowResize = () => {
       canvas.width = canvasContainer.current?.clientWidth;
       canvas.height = canvasContainer.current?.clientHeight;
-      // redraw the canvas when it's cleared on resize
-      initCanvasState.current.forEach((item) => drawLine(item));
     };
 
     window.addEventListener('resize', handleWindowResize);
@@ -185,7 +176,6 @@ const App = () => {
     if (socketClient) {
       socketClient.on(events.DRAW, (data) => {
         // keep client side canvas state up to date
-        initCanvasState.current.push(data);
         drawLine(data);
       });
     }
@@ -194,8 +184,7 @@ const App = () => {
   useEffect(() => {
     if (socketClient) {
       socketClient.on(events.INIT_CANVAS, (data) => {
-        initCanvasState.current = data;
-        initCanvasState.current.forEach((item) => drawLine(item));
+        data.forEach((item) => drawLine(item));
       });
     }
   }, [socketClient]);
@@ -205,20 +194,7 @@ const App = () => {
     if (socketClient) {
       socketClient.on(events.CONNECTION_ERROR, (err) => {
         setIsServerAuthed(false);
-        setNumberOfClients(0);
       });
-    }
-  }, [socketClient]);
-
-  // listen for number of connected clients
-  useEffect(() => {
-    if (socketClient) {
-      socketClient.on(
-        events.NUMBER_OF_CONNECTED_CLIENTS,
-        (numberOfConnectedClients) => {
-          setNumberOfClients(numberOfConnectedClients);
-        }
-      );
     }
   }, [socketClient]);
 
@@ -241,7 +217,6 @@ const App = () => {
   const handleSocketDisconnect = () => {
     socketClient.disconnect();
     setIsServerAuthed(false);
-    setNumberOfClients(0);
   };
 
   return (
@@ -270,7 +245,6 @@ const App = () => {
         >
           Disconnect from Socket.io server
         </button>
-        <div>{numberOfClients} currently connected</div>
       </header>
       <div id="canvas-container" ref={canvasContainer}>
         <canvas
