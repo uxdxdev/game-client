@@ -66,20 +66,18 @@ const App = () => {
     const canvas = drawingCanvas.current;
     const context = canvas.getContext('2d');
     canvasContext.current = context;
-    let pointerId = null;
+    let pointerIdArray = [];
 
     const handleMouseDown = (e) => {
       x.current = e.offsetX;
       y.current = e.offsetY;
       isDrawing.current = true;
-      if (!pointerId) {
-        pointerId = e.pointerId;
-      }
+      pointerIdArray.push(e.pointerId);
     };
     canvas.addEventListener('pointerdown', handleMouseDown);
 
     const handleMouseMove = (e) => {
-      if (isDrawing.current === true && e.pointerId === pointerId) {
+      if (isDrawing.current === true && e.pointerId === pointerIdArray[0]) {
         const data = {
           x1: x.current,
           y1: y.current,
@@ -103,7 +101,7 @@ const App = () => {
         x.current = 0;
         y.current = 0;
         isDrawing.current = false;
-        pointerId = null;
+        pointerIdArray.filter((pointerId) => pointerId !== e.pointerId);
       }
     };
     window.addEventListener('pointerup', handleMouseUp);
