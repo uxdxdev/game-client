@@ -1,5 +1,7 @@
 # Development Setup
 
+- NodeJS 16 supported, there seems to be an issue at the moment with SSL in NodeJS 17 using CRA
+
 - create self signed certificate by installing [mkcert](https://github.com/FiloSottile/mkcert) for https in development
 
 ```bash

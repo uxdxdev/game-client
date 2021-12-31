@@ -13,7 +13,8 @@
     "socket.io-client": "^4.4.0"
   },
   "scripts": {
-    "dev": "HTTPS=true SSL_CRT_FILE=localhost.pem SSL_KEY_FILE=localhost-key.pem yarn start",
+    "dev": "HTTPS=true SSL_CRT_FILE=localhost.pem SSL_KEY_FILE=localhost-key.pem npm start",
+    "dev:windows": "set HTTPS=true&&set SSL_CRT_FILE=localhost.pem&&set SSL_KEY_FILE=localhost-key.pem&&npm start",
     "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
