@@ -105,7 +105,6 @@ const App = () => {
         pointerIdArray = pointerIdArray.filter(
           (pointerId) => pointerId !== e.pointerId
         );
-        console.log(pointerIdArray);
       }
     };
     window.addEventListener('pointerup', handleMouseUp);
