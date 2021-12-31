@@ -30,6 +30,7 @@ const events = {
   CONNECTED: 'connected',
   CONNECTION_ERROR: 'connect_error',
   DRAW: 'draw',
+  INIT_CANVAS: 'init_canvas',
 };
 
 const App = () => {
@@ -175,6 +176,14 @@ const App = () => {
     if (socketClient) {
       socketClient.on(events.DRAW, (data) => {
         drawLine(data);
+      });
+    }
+  }, [socketClient]);
+
+  useEffect(() => {
+    if (socketClient) {
+      socketClient.on(events.INIT_CANVAS, (data) => {
+        data.forEach((item) => drawLine(item));
       });
     }
   }, [socketClient]);
