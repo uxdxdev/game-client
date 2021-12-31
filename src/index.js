@@ -47,6 +47,7 @@ const App = () => {
   const drawingCanvas = useRef();
   const canvasContext = useRef();
   const canvasContainer = useRef();
+  const initCanvasState = useRef();
 
   useEffect(() => {
     setColor('#' + (Math.random().toString(16) + '00000').slice(2, 8));
@@ -101,7 +102,10 @@ const App = () => {
         x.current = 0;
         y.current = 0;
         isDrawing.current = false;
-        pointerIdArray.filter((pointerId) => pointerId !== e.pointerId);
+        pointerIdArray = pointerIdArray.filter(
+          (pointerId) => pointerId !== e.pointerId
+        );
+        console.log(pointerIdArray);
       }
     };
     window.addEventListener('pointerup', handleMouseUp);
@@ -109,6 +113,8 @@ const App = () => {
     const handleWindowResize = () => {
       canvas.width = canvasContainer.current?.clientWidth;
       canvas.height = canvasContainer.current?.clientHeight;
+      // redraw the canvas when it's cleared on resize
+      initCanvasState.current.forEach((item) => drawLine(item));
     };
 
     window.addEventListener('resize', handleWindowResize);
@@ -175,9 +181,12 @@ const App = () => {
     }
   }, [socketClient]);
 
+  // update client canvas when server says so
   useEffect(() => {
     if (socketClient) {
       socketClient.on(events.DRAW, (data) => {
+        // keep client side canvas state up to date
+        initCanvasState.current.push(data);
         drawLine(data);
       });
     }
@@ -186,7 +195,8 @@ const App = () => {
   useEffect(() => {
     if (socketClient) {
       socketClient.on(events.INIT_CANVAS, (data) => {
-        data.forEach((item) => drawLine(item));
+        initCanvasState.current = data;
+        initCanvasState.current.forEach((item) => drawLine(item));
       });
     }
   }, [socketClient]);
@@ -222,9 +232,7 @@ const App = () => {
 
   const handleUnAuth = () => {
     auth.signOut();
-    socketClient.disconnect();
-    setIsServerAuthed(false);
-    setNumberOfClients(0);
+    handleSocketDisconnect();
   };
 
   const handleSocketConnect = () => {
