@@ -34,6 +34,7 @@ const App = () => {
           .map((key, index) => {
             if (key === socketClient.id) return null;
             const playerData = allPlayers[key];
+            if (!playerData.position || !playerData.rotation) return null;
             return <ConnectedPlayer key={index} position={playerData.position} rotation={playerData.rotation} />;
           })
           .filter((item) => item !== null);
@@ -46,14 +47,26 @@ const App = () => {
   return (
     <>
       <header>
-        <div>firebase authenticated? {authToken ? 'true' : 'false'}</div>
+        <div
+          style={{
+            backgroundColor: authToken ? 'green' : 'red',
+          }}
+        >
+          Firebase authenticated? {authToken ? 'true' : 'false'}
+        </div>
         <button onClick={login} disabled={authToken}>
           Login to Firebase
         </button>
         <button onClick={logout} disabled={authToken === null || !authToken}>
           Logout of Firebase
         </button>
-        <div>server authenticated? {isServerAuthed ? 'true' : 'false'}</div>
+        <div
+          style={{
+            backgroundColor: isServerAuthed ? 'green' : 'red',
+          }}
+        >
+          Server authenticated? {isServerAuthed ? 'true' : 'false'}
+        </div>
         <button onClick={handleSocketReconnect} disabled={!authToken || isServerAuthed === null || isServerAuthed}>
           Reconnect to Socket.io server
         </button>

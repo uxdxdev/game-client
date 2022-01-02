@@ -57,7 +57,8 @@ export const Player = (props) => {
   const target = new Vector3();
 
   let now = 0;
-  // let moving = forward || backward || left || right;
+  let millisecondsPerTick = 50; // 20 times per second
+  let tickRate = millisecondsPerTick / 1000;
   useFrame(({ camera, clock }) => {
     // move the player when WASD are pressed
     frontVector.set(0, 0, Number(backward) - Number(forward));
@@ -82,10 +83,12 @@ export const Player = (props) => {
     // send player position to server when moving
     now = clock.getElapsedTime();
     // 1 second / 20 = 0.05 i.e. 20 times per second
-    if (now - last.current >= 0.05) {
+
+    if (now - last.current >= tickRate) {
       if (socketClient && socketClient.id !== undefined) {
         socketClient.emit('player_update', { id: socketClient.id, position: [...ref.current.position], rotation: [ref.current.rotation.x, ref.current.rotation.y, ref.current.rotation.z] });
       }
+      // reset the elapsed time if it goes over our tickrate
       last.current = now;
     }
   });
@@ -94,7 +97,6 @@ export const Player = (props) => {
   useEffect(() => {
     // not using "moving" because the frame rate sometimes will not send the latest player position
     if (socketClient && socketClient.id !== undefined) {
-      console.log(socketClient.id);
       socketClient.emit('player_update', { id: socketClient.id, position: [...ref.current.position], rotation: [ref.current.rotation.x, ref.current.rotation.y, ref.current.rotation.z] });
     }
   }, [socketClient, socketClient?.id]);
