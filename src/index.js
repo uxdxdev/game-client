@@ -11,7 +11,7 @@ import { ConnectedPlayer } from './connectedPlayer';
 
 const App = () => {
   // const [color, setColor] = useState('#000000');
-  const [connectedPlayers, setConnectedPlayers] = useState({});
+  const [connectedPlayers, setConnectedPlayers] = useState([]);
 
   const { authToken, login, logout, userId } = useAuth();
   const { socketClient, isServerAuthed, handleSocketReconnect, handleSocketDisconnect } = useNetwork();
@@ -29,21 +29,19 @@ const App = () => {
 
   useEffect(() => {
     if (socketClient) {
-      socketClient.on('player_update', (data) => {
-        if (data.userId !== socketClient.id) {
-          setConnectedPlayers((state) => ({
-            ...state,
-            [data.userId]: data,
-          }));
-        }
+      socketClient.on('players', (allPlayers) => {
+        let remotePlayers = Object.keys(allPlayers)
+          .map((key, index) => {
+            if (key === socketClient.id) return null;
+            const playerData = allPlayers[key];
+            return <ConnectedPlayer key={index} position={playerData.position} rotation={playerData.rotation} />;
+          })
+          .filter((item) => item !== null);
+
+        setConnectedPlayers(remotePlayers);
       });
     }
   }, [userId, socketClient]);
-
-  const test = Object.keys(connectedPlayers).map((key, index) => {
-    const playerData = connectedPlayers[key];
-    return <ConnectedPlayer key={index} position={playerData.position} rotation={playerData.rotation} />;
-  });
 
   return (
     <>
@@ -74,7 +72,7 @@ const App = () => {
           <pointLight castShadow position={[10, 10, -10]} />
           <Physics>
             <Player socketClient={socketClient} />
-            {test}
+            {connectedPlayers}
             <Ground />
           </Physics>
         </Canvas>

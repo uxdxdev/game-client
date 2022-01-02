@@ -5,6 +5,7 @@ import { Vector3 } from 'three';
 import { useGLTF } from '@react-three/drei';
 
 const SPEED = 5;
+const CAMERA_Z_DISTANCE_FROM_PLAYER = 5;
 const keys = {
   KeyW: 'forward',
   KeyS: 'backward',
@@ -37,12 +38,16 @@ export const Player = (props) => {
   const ref = useRef();
   const last = useRef(0);
   const { forward, backward, left, right } = usePlayerControls();
+
+  // load astronaut model
   const { nodes, materials } = useGLTF('/Astronaut.glb');
 
   const { socketClient } = props;
   const [mesh, api] = useSphere(() => ({
     mass: 1,
     type: 'Dynamic',
+    // make the physics sphere tiny to bring the mesh close to the ground
+    // todo: find a way to offset the mesh so it's closer to the ground without modifying the size of the physics sphere
     args: [0.01],
   }));
 
@@ -52,29 +57,47 @@ export const Player = (props) => {
   const target = new Vector3();
 
   let now = 0;
-  let moving = forward || backward || left || right;
+  // let moving = forward || backward || left || right;
   useFrame(({ camera, clock }) => {
+    // move the player when WASD are pressed
     frontVector.set(0, 0, Number(backward) - Number(forward));
     sideVector.set(Number(left) - Number(right), 0, 0);
     direction.subVectors(frontVector, sideVector).normalize().multiplyScalar(SPEED);
     api.velocity.set(direction.x, 0, direction.z);
 
+    // set the mesh to the same position as the physics sphere
     mesh.current.getWorldPosition(ref.current.position);
 
+    // get the camera to follow the player
     camera.position.setX(ref.current.position.x);
-    camera.position.setZ(ref.current.position.z + 5);
+    camera.position.setZ(ref.current.position.z + CAMERA_Z_DISTANCE_FROM_PLAYER);
 
-    target.addVectors(ref.current.position, direction.normalize());
-    ref.current.lookAt(target);
+    // rotate the player in the direction they are moving
+    const normalisedDirection = direction.normalize();
+    if (normalisedDirection.x !== 0 || normalisedDirection.y !== 0 || normalisedDirection.z !== 0) {
+      target.addVectors(ref.current.position, normalisedDirection);
+      ref.current.lookAt(target);
+    }
 
+    // send player position to server when moving
     now = clock.getElapsedTime();
+    // 1 second / 20 = 0.05 i.e. 20 times per second
     if (now - last.current >= 0.05) {
-      if (socketClient && moving) {
-        socketClient.emit('player_update', { userId: socketClient.id, position: [...ref.current.position], rotation: { x: ref.current.rotation.x, y: ref.current.rotation.y, z: ref.current.rotation.z } });
+      if (socketClient && socketClient.id !== undefined) {
+        socketClient.emit('player_update', { id: socketClient.id, position: [...ref.current.position], rotation: [ref.current.rotation.x, ref.current.rotation.y, ref.current.rotation.z] });
       }
       last.current = now;
     }
   });
+
+  // on mount send player coordinates
+  useEffect(() => {
+    // not using "moving" because the frame rate sometimes will not send the latest player position
+    if (socketClient && socketClient.id !== undefined) {
+      console.log(socketClient.id);
+      socketClient.emit('player_update', { id: socketClient.id, position: [...ref.current.position], rotation: [ref.current.rotation.x, ref.current.rotation.y, ref.current.rotation.z] });
+    }
+  }, [socketClient, socketClient?.id]);
 
   return <mesh ref={ref} {...props} castShadow receiveShadow geometry={nodes.Astronaut_mesh.geometry} material={materials.Astronaut_mat} />;
 };
