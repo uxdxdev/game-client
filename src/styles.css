@@ -8,22 +8,11 @@ body {
   margin: 0;
 }
 
-.h-full {
-  height: 100%;
+#root {
   display: flex;
   flex-direction: column;
 }
 
 #canvas-container {
-  /* expand the canvas container to fill the remaining space on screen */
   flex-grow: 1;
-  border: 5px solid black;
-}
-
-canvas {
-  /* canvas by default is 'inline' causing scrolling issues */
-  display: block;
-
-  /* prevent default on mobile devices when using pointer events */
-  touch-action: none;
 }
