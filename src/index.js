@@ -6,7 +6,10 @@ import { Player } from './player';
 import { Ground } from './ground';
 import { useAuth } from './auth';
 import { useNetwork } from './network';
-import { Debug, Physics } from '@react-three/cannon';
+import {
+  // Debug,
+  Physics,
+} from '@react-three/cannon';
 import { ConnectedPlayer } from './connectedPlayer';
 
 const App = () => {
@@ -80,11 +83,11 @@ const App = () => {
           <ambientLight intensity={0.3} />
           <pointLight castShadow position={[10, 10, -10]} />
           <Physics>
-            <Debug>
-              <Player socketClient={socketClient} />
-              {connectedPlayers}
-              <Ground />
-            </Debug>
+            {/* <Debug> */}
+            <Player socketClient={socketClient} />
+            {connectedPlayers}
+            <Ground />
+            {/* </Debug> */}
           </Physics>
         </Canvas>
       </div>

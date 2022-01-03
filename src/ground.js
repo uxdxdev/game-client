@@ -14,20 +14,19 @@ export const Ground = (props) => {
     let position = ref.current.geometry.attributes.position;
     for (let i = 0, l = position.count; i < l; i++) {
       vertex.fromBufferAttribute(position, i);
-      // vertex.y = Math.random() * 0.5;
-      vertex.z = Math.random() * 0.5;
+      vertex.z = Math.random() * 0.1;
       position.setXYZ(i, vertex.x, vertex.y, vertex.z);
     }
   }, [ref]);
 
   return (
-    <mesh ref={ref} receiveShadow {...props}>
-      <planeGeometry args={[1000, 1000]} />
-      <meshStandardMaterial map={texture} map-repeat={[250, 250]} />
-    </mesh>
     // <mesh ref={ref} receiveShadow {...props}>
-    //   <planeGeometry args={[100, 100, 100, 100]} />
-    //   <meshStandardMaterial color={0x7cfc00} flatShading={true} metalness={0} />
+    //   <planeGeometry args={[1000, 1000]} />
+    //   <meshStandardMaterial map={texture} map-repeat={[250, 250]} />
     // </mesh>
+    <mesh ref={ref} receiveShadow {...props}>
+      <planeGeometry args={[100, 100, 50, 50]} />
+      <meshStandardMaterial color={0x7cfc00} flatShading={true} metalness={0} />
+    </mesh>
   );
 };
