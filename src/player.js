@@ -4,7 +4,7 @@ import { useSphere } from '@react-three/cannon';
 import { Vector3 } from 'three';
 import { useGLTF } from '@react-three/drei';
 
-const SPEED = 5;
+const SPEED = 10;
 const CAMERA_Z_DISTANCE_FROM_PLAYER = 5;
 const keys = {
   KeyW: 'forward',
@@ -44,11 +44,11 @@ export const Player = (props) => {
 
   const { socketClient } = props;
   const [mesh, api] = useSphere(() => ({
-    mass: 1,
-    type: 'Dynamic',
+    mass: 0,
+    type: 'Kinematic',
     // make the physics sphere tiny to bring the mesh close to the ground
     // todo: find a way to offset the mesh so it's closer to the ground without modifying the size of the physics sphere
-    args: [0.01],
+    args: [1],
   }));
 
   const frontVector = new Vector3();

@@ -6,7 +6,7 @@ import { Player } from './player';
 import { Ground } from './ground';
 import { useAuth } from './auth';
 import { useNetwork } from './network';
-import { Physics } from '@react-three/cannon';
+import { Debug, Physics } from '@react-three/cannon';
 import { ConnectedPlayer } from './connectedPlayer';
 
 const App = () => {
@@ -75,18 +75,16 @@ const App = () => {
         </button>
       </header>
       <div id="canvas-container">
-        <Canvas
-          shadows
-          camera={{
-            position: [0, 10, 5],
-          }}
-        >
+        <Canvas shadows camera={{ position: [0, 10, 5] }}>
+          {/* <Canvas shadows orthographic camera={{ zoom: 50, position: [0, 7, 5] }}> */}
           <ambientLight intensity={0.3} />
           <pointLight castShadow position={[10, 10, -10]} />
           <Physics>
-            <Player socketClient={socketClient} />
-            {connectedPlayers}
-            <Ground />
+            <Debug>
+              <Player socketClient={socketClient} />
+              {connectedPlayers}
+              <Ground />
+            </Debug>
           </Physics>
         </Canvas>
       </div>
