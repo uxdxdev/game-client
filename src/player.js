@@ -1,8 +1,8 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
 import { useFrame } from '@react-three/fiber';
 import { useSphere } from '@react-three/cannon';
 import { Vector3 } from 'three';
-import { useGLTF } from '@react-three/drei';
+import { Fox } from './fox';
 
 const SPEED = 10;
 const CAMERA_Z_DISTANCE_FROM_PLAYER = 5;
@@ -38,17 +38,11 @@ export const Player = (props) => {
   const ref = useRef();
   const last = useRef(0);
   const { forward, backward, left, right } = usePlayerControls();
-
-  // load astronaut model
-  const { nodes, materials } = useGLTF('/Astronaut.glb');
+  const moving = forward || backward || left || right;
 
   const { socketClient } = props;
   const [mesh, api] = useSphere(() => ({
-    mass: 0,
     type: 'Kinematic',
-    // make the physics sphere tiny to bring the mesh close to the ground
-    // todo: find a way to offset the mesh so it's closer to the ground without modifying the size of the physics sphere
-    args: [1],
   }));
 
   const frontVector = new Vector3();
@@ -59,6 +53,13 @@ export const Player = (props) => {
   let now = 0;
   let millisecondsPerTick = 50; // 20 times per second
   let tickRate = millisecondsPerTick / 1000;
+
+  const sendPlayerData = useCallback(() => {
+    if (socketClient && socketClient.id !== undefined && ref.current.position && ref.current.rotation) {
+      socketClient.emit('player_update', { moving, id: socketClient.id, position: [...ref.current.position], rotation: [ref.current.rotation.x, ref.current.rotation.y, ref.current.rotation.z] });
+    }
+  }, [socketClient, moving]);
+
   useFrame(({ camera, clock }) => {
     // move the player when WASD are pressed
     frontVector.set(0, 0, Number(backward) - Number(forward));
@@ -82,12 +83,8 @@ export const Player = (props) => {
 
     // send player position to server when moving
     now = clock.getElapsedTime();
-    // 1 second / 20 = 0.05 i.e. 20 times per second
-
     if (now - last.current >= tickRate) {
-      if (socketClient && socketClient.id !== undefined) {
-        socketClient.emit('player_update', { id: socketClient.id, position: [...ref.current.position], rotation: [ref.current.rotation.x, ref.current.rotation.y, ref.current.rotation.z] });
-      }
+      sendPlayerData();
       // reset the elapsed time if it goes over our tickrate
       last.current = now;
     }
@@ -95,13 +92,8 @@ export const Player = (props) => {
 
   // on mount send player coordinates
   useEffect(() => {
-    // not using "moving" because the frame rate sometimes will not send the latest player position
-    if (socketClient && socketClient.id !== undefined) {
-      socketClient.emit('player_update', { id: socketClient.id, position: [...ref.current.position], rotation: [ref.current.rotation.x, ref.current.rotation.y, ref.current.rotation.z] });
-    }
-  }, [socketClient, socketClient?.id]);
+    sendPlayerData();
+  }, [sendPlayerData]);
 
-  return <mesh ref={ref} {...props} castShadow receiveShadow geometry={nodes.Astronaut_mesh.geometry} material={materials.Astronaut_mat} />;
+  return <Fox ref={ref} moving={moving} />;
 };
-
-useGLTF.preload('/Astronaut.glb');

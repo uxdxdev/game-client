@@ -16,3 +16,7 @@ body {
 #canvas-container {
   flex-grow: 1;
 }
+
+header {
+  display: flex;
+}
