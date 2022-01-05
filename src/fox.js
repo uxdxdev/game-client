@@ -7,7 +7,6 @@ export const Fox = forwardRef((props, ref) => {
   const { scene, materials, animations } = useGLTF('/Fox.glb');
   const clone = useMemo(() => SkeletonUtils.clone(scene), [scene]);
   const { nodes } = useGraph(clone);
-
   const { moving } = props;
   const { actions } = useAnimations(animations, ref);
 

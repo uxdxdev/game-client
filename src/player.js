@@ -1,10 +1,9 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { useFrame } from '@react-three/fiber';
-import { useSphere } from '@react-three/cannon';
 import { Vector3 } from 'three';
 import { Fox } from './fox';
 
-const SPEED = 10;
+const SPEED = 0.2;
 const CAMERA_Z_DISTANCE_FROM_PLAYER = 5;
 const keys = {
   KeyW: 'forward',
@@ -41,9 +40,6 @@ export const Player = (props) => {
   const moving = forward || backward || left || right;
 
   const { socketClient } = props;
-  const [mesh, api] = useSphere(() => ({
-    type: 'Kinematic',
-  }));
 
   const frontVector = new Vector3();
   const sideVector = new Vector3();
@@ -64,11 +60,16 @@ export const Player = (props) => {
     // move the player when WASD are pressed
     frontVector.set(0, 0, Number(backward) - Number(forward));
     sideVector.set(Number(left) - Number(right), 0, 0);
-    direction.subVectors(frontVector, sideVector).normalize().multiplyScalar(SPEED);
-    api.velocity.set(direction.x, 0, direction.z);
+    direction.subVectors(frontVector, sideVector).normalize();
 
-    // set the mesh to the same position as the physics sphere
-    mesh.current.getWorldPosition(ref.current.position);
+    let x = ref.current.position.x;
+    let z = ref.current.position.z;
+    if (right) x += SPEED;
+    if (left) x -= SPEED;
+    if (forward) z -= SPEED;
+    if (backward) z += SPEED;
+    ref.current.position.setX(x);
+    ref.current.position.setZ(z);
 
     // get the camera to follow the player
     camera.position.setX(ref.current.position.x);

@@ -1,15 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import ReactDOM from 'react-dom';
-import './styles.css';
 import { Canvas } from '@react-three/fiber';
-import { Player } from './player';
-import { Ground } from './ground';
 import { useAuth } from './auth';
 import { useNetwork } from './network';
-import { Debug, Physics } from '@react-three/cannon';
+import { Player } from './player';
 import { RemotePlayer } from './remotePlayer';
-
-const DEBUG = true;
+import { Ground } from './ground';
+import './styles.css';
 
 const App = () => {
   // const [color, setColor] = useState('#000000');
@@ -81,13 +78,9 @@ const App = () => {
           {/* <Canvas shadows orthographic camera={{ zoom: 10, position: [0, 7, 5] }}> */}
           <ambientLight intensity={0.3} />
           <pointLight castShadow position={[10, 10, -10]} />
-          <Physics>
-            <Debug>
-              <Player socketClient={socketClient} />
-              {remotePlayers}
-              <Ground />
-            </Debug>
-          </Physics>
+          <Player socketClient={socketClient} />
+          {remotePlayers}
+          <Ground />
         </Canvas>
       </div>
     </>
