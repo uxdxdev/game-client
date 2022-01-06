@@ -52,16 +52,18 @@ export const Player = (props) => {
 
   const sendPlayerData = useCallback(() => {
     if (socketClient && socketClient.id !== undefined && ref.current.position && ref.current.rotation) {
-      socketClient.emit('player_update', { moving, id: socketClient.id, position: [...ref.current.position], rotation: [ref.current.rotation.x, ref.current.rotation.y, ref.current.rotation.z] });
+      const playerData = { moving, id: socketClient.id, position: [...ref.current.position], rotation: [ref.current.rotation.x, ref.current.rotation.y, ref.current.rotation.z] };
+      socketClient.emit('player_update', playerData);
     }
   }, [socketClient, moving]);
 
-  useFrame(({ camera, clock }) => {
-    // move the player when WASD are pressed
-    frontVector.set(0, 0, Number(backward) - Number(forward));
-    sideVector.set(Number(left) - Number(right), 0, 0);
-    direction.subVectors(frontVector, sideVector).normalize();
+  // on mount send player coordinates
+  useEffect(() => {
+    sendPlayerData();
+  }, [sendPlayerData]);
 
+  useFrame(({ camera, clock }) => {
+    // add the SPEED to the players positional coordinates based on controls
     let x = ref.current.position.x;
     let z = ref.current.position.z;
     if (right) x += SPEED;
@@ -71,30 +73,31 @@ export const Player = (props) => {
     ref.current.position.setX(x);
     ref.current.position.setZ(z);
 
-    // get the camera to follow the player
+    // get the camera to follow the player by updating x and z coordinates
     camera.position.setX(ref.current.position.x);
     camera.position.setZ(ref.current.position.z + CAMERA_Z_DISTANCE_FROM_PLAYER);
 
-    // rotate the player in the direction they are moving
-    const normalisedDirection = direction.normalize();
-    if (normalisedDirection.x !== 0 || normalisedDirection.y !== 0 || normalisedDirection.z !== 0) {
-      target.addVectors(ref.current.position, normalisedDirection);
+    // find the players direction
+    frontVector.set(0, 0, Number(backward) - Number(forward));
+    sideVector.set(Number(left) - Number(right), 0, 0);
+    direction.subVectors(frontVector, sideVector).normalize();
+
+    if (direction.x !== 0 || direction.y !== 0 || direction.z !== 0) {
+      // create a target point just ahead of the player in the direction they should be moving
+      target.addVectors(ref.current.position, direction);
+      // rotate the player character to look at the target point
       ref.current.lookAt(target);
     }
 
-    // send player position to server when moving
+    // run this block at tickRate
     now = clock.getElapsedTime();
     if (now - last.current >= tickRate) {
+      // send player position to server
       sendPlayerData();
       // reset the elapsed time if it goes over our tickrate
       last.current = now;
     }
   });
-
-  // on mount send player coordinates
-  useEffect(() => {
-    sendPlayerData();
-  }, [sendPlayerData]);
 
   return <Fox ref={ref} moving={moving} />;
 };
