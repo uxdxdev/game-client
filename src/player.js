@@ -4,7 +4,7 @@ import { Vector3 } from 'three';
 import { Fox } from './fox';
 
 const SPEED = 0.2;
-const CAMERA_Z_DISTANCE_FROM_PLAYER = 5;
+const CAMERA_Z_DISTANCE_FROM_PLAYER = 40;
 const keys = {
   KeyW: 'forward',
   KeyS: 'backward',

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { Suspense, useEffect, useState } from 'react';
 import ReactDOM from 'react-dom';
 import { Canvas } from '@react-three/fiber';
 import { useAuth } from './auth';
@@ -6,6 +6,9 @@ import { useNetwork } from './network';
 import { Player } from './player';
 import { RemotePlayer } from './remotePlayer';
 import { Ground } from './ground';
+import Tree from './tree';
+import { Loader } from './loader';
+
 import './styles.css';
 
 const App = () => {
@@ -74,13 +77,15 @@ const App = () => {
         <div style={{ position: 'absolute', bottom: 0, left: 0, zIndex: 100 }}>{socketClient?.id}</div>
       </header>
       <div id="canvas-container">
-        <Canvas shadows camera={{ position: [0, 10, 5] }}>
-          {/* <Canvas shadows orthographic camera={{ zoom: 10, position: [0, 7, 5] }}> */}
-          <ambientLight intensity={0.3} />
-          <pointLight castShadow position={[10, 10, -10]} />
-          <Player socketClient={socketClient} />
-          {remotePlayers}
-          <Ground />
+        <Canvas shadows orthographic camera={{ zoom: 40, position: [0, 40, 40] }}>
+          <ambientLight />
+          <directionalLight castShadow position={[40, 40, 40]} shadows />
+          <Suspense fallback={<Loader />}>
+            <Player socketClient={socketClient} />
+            {remotePlayers}
+            <Tree />
+            <Ground />
+          </Suspense>
         </Canvas>
       </div>
     </>
