@@ -12,15 +12,9 @@ import { Loader } from './loader';
 import './styles.css';
 
 const App = () => {
-  // const [color, setColor] = useState('#000000');
   const [remotePlayers, setRemotePlayers] = useState([]);
-
   const { authToken, login, logout, userId } = useAuth();
   const { socketClient, isServerAuthed, handleSocketReconnect, handleSocketDisconnect } = useNetwork();
-
-  // useEffect(() => {
-  //   setColor('#' + (Math.random().toString(16) + '00000').slice(2, 8));
-  // }, []);
 
   // once authenticated, ping the server to check if it's up
   useEffect(() => {
@@ -29,6 +23,7 @@ const App = () => {
     }
   }, [authToken]);
 
+  // get updates of all other players from the server
   useEffect(() => {
     if (socketClient) {
       socketClient.on('players', (allPlayers) => {
@@ -76,14 +71,15 @@ const App = () => {
         </button>
         <div style={{ position: 'absolute', bottom: 0, left: 0, zIndex: 100 }}>{socketClient?.id}</div>
       </header>
+      {/* see styles.css for canvas-container styling  */}
       <div id="canvas-container">
         <Canvas shadows orthographic camera={{ zoom: 40, position: [0, 40, 40] }}>
           <ambientLight />
-          <directionalLight castShadow position={[40, 40, 40]} shadows />
+          <directionalLight castShadow position={[40, 40, 40]} shadow-camera-left={-40} shadow-camera-right={40} shadow-camera-top={40} shadow-camera-bottom={-40} />
           <Suspense fallback={<Loader />}>
             <Player socketClient={socketClient} />
             {remotePlayers}
-            <Tree />
+            <Tree position={[1, 0, 0]} />
             <Ground />
           </Suspense>
         </Canvas>

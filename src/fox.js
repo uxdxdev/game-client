@@ -23,7 +23,7 @@ export const Fox = forwardRef((props, ref) => {
   return (
     <group ref={ref} {...props} dispose={null} scale={[0.04, 0.04, 0.04]}>
       <primitive object={nodes._rootJoint} />
-      <skinnedMesh geometry={nodes.fox.geometry} material={materials.fox_material} skeleton={nodes.fox.skeleton} castShadow receiveShadow />
+      <skinnedMesh geometry={nodes.fox.geometry} material={materials.fox_material} skeleton={nodes.fox.skeleton} castShadow receiveShadow name="fox" />
     </group>
   );
 });

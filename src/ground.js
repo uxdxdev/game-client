@@ -26,7 +26,7 @@ export const Ground = (props) => {
     // </mesh>
     <mesh ref={ref} receiveShadow {...props} rotation={[-Math.PI / 2, 0, 0]}>
       <planeGeometry args={[100, 100, 50, 50]} />
-      <meshStandardMaterial color={0x7cfc00} flatShading={true} metalness={0} />
+      <meshStandardMaterial color={0x7cfc00} flatShading={true} metalness={0} name="ground" />
     </mesh>
   );
 };

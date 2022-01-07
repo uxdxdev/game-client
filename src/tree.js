@@ -6,7 +6,7 @@ export default function Tree(props) {
   const { nodes, materials } = useGLTF('/Orange tree.glb');
   return (
     <group ref={group} {...props} dispose={null}>
-      <mesh castShadow receiveShadow geometry={nodes.OrangeTree.geometry} material={materials.OrangeTree_mat} />
+      <mesh castShadow receiveShadow geometry={nodes.OrangeTree.geometry} material={materials.OrangeTree_mat} name="tree" />
     </group>
   );
 }

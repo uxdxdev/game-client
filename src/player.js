@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { useFrame } from '@react-three/fiber';
-import { Vector3 } from 'three';
+import { Raycaster, Vector3 } from 'three';
 import { Fox } from './fox';
 
 const SPEED = 0.2;
@@ -62,17 +62,10 @@ export const Player = (props) => {
     sendPlayerData();
   }, [sendPlayerData]);
 
-  useFrame(({ camera, clock }) => {
-    // add the SPEED to the players positional coordinates based on controls
-    let x = ref.current.position.x;
-    let z = ref.current.position.z;
-    if (right) x += SPEED;
-    if (left) x -= SPEED;
-    if (forward) z -= SPEED;
-    if (backward) z += SPEED;
-    ref.current.position.setX(x);
-    ref.current.position.setZ(z);
+  const raycaster = new Raycaster();
+  const rays = [new Vector3(0, 0, 1), new Vector3(1, 0, 1), new Vector3(1, 0, 0), new Vector3(1, 0, -1), new Vector3(0, 0, -1), new Vector3(-1, 0, -1), new Vector3(-1, 0, 0), new Vector3(-1, 0, 1)];
 
+  useFrame(({ camera, clock }) => {
     // get the camera to follow the player by updating x and z coordinates
     camera.position.setX(ref.current.position.x);
     camera.position.setZ(ref.current.position.z + CAMERA_Z_DISTANCE_FROM_PLAYER);
@@ -80,13 +73,44 @@ export const Player = (props) => {
     // find the players direction
     frontVector.set(0, 0, Number(backward) - Number(forward));
     sideVector.set(Number(left) - Number(right), 0, 0);
-    direction.subVectors(frontVector, sideVector).normalize();
+    direction.subVectors(frontVector, sideVector);
 
     if (direction.x !== 0 || direction.y !== 0 || direction.z !== 0) {
       // create a target point just ahead of the player in the direction they should be moving
       target.addVectors(ref.current.position, direction);
       // rotate the player character to look at the target point
       ref.current.lookAt(target);
+    }
+
+    let isXEnabled = true;
+    let isZEnabled = true;
+    for (let i = 0; i < rays.length; i += 1) {
+      raycaster.set(ref.current.position, rays[i]);
+      const intersects = raycaster.intersectObjects(ref.current.parent.children);
+      if (intersects.length > 0 && intersects[0].object.name !== 'fox' && intersects[0].distance < 3) {
+        if ((i === 0 || i === 1 || i === 7) && direction.z === 1) {
+          isZEnabled = false;
+        } else if ((i === 3 || i === 4 || i === 5) && direction.z === -1) {
+          isZEnabled = false;
+        }
+        if ((i === 1 || i === 2 || i === 3) && direction.x === 1) {
+          isXEnabled = false;
+        } else if ((i === 5 || i === 6 || i === 7) && direction.x === -1) {
+          isXEnabled = false;
+        }
+      }
+    }
+
+    // add the SPEED to the players positional coordinates based on controls
+    if (direction.x !== 0 || direction.z !== 0) {
+      let x = ref.current.position.x;
+      let z = ref.current.position.z;
+      if (right) x += SPEED;
+      if (left) x -= SPEED;
+      if (forward) z -= SPEED;
+      if (backward) z += SPEED;
+      isXEnabled && ref.current.position.setX(x);
+      isZEnabled && ref.current.position.setZ(z);
     }
 
     // run this block at tickRate
