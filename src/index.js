@@ -1,9 +1,9 @@
-import React, { Suspense, useEffect, useState } from 'react';
+import React, { Suspense, useEffect, useMemo, useState } from 'react';
 import ReactDOM from 'react-dom';
 import { Canvas } from '@react-three/fiber';
 import { useAuth } from './auth';
 import { useNetwork } from './network';
-import { Player } from './player';
+import Player from './player';
 import { RemotePlayer } from './remotePlayer';
 import { Ground } from './ground';
 import Tree from './tree';

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, useCallback } from 'react';
+import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { useFrame } from '@react-three/fiber';
 import { Raycaster, Vector3 } from 'three';
 import { Fox } from './fox';
@@ -33,7 +33,7 @@ const usePlayerControls = () => {
   return movement;
 };
 
-export const Player = (props) => {
+const Player = (props) => {
   const ref = useRef();
   const last = useRef(0);
   const { forward, backward, left, right } = usePlayerControls();
@@ -84,20 +84,31 @@ export const Player = (props) => {
 
     let isXEnabled = true;
     let isZEnabled = true;
-    for (let i = 0; i < rays.length; i += 1) {
-      raycaster.set(ref.current.position, rays[i]);
-      const intersects = raycaster.intersectObjects(ref.current.parent.children);
-      if (intersects.length > 0 && intersects[0].object.name !== 'fox' && intersects[0].distance < 3) {
-        if ((i === 0 || i === 1 || i === 7) && direction.z === 1) {
-          isZEnabled = false;
-        } else if ((i === 3 || i === 4 || i === 5) && direction.z === -1) {
-          isZEnabled = false;
-        }
-        if ((i === 1 || i === 2 || i === 3) && direction.x === 1) {
-          isXEnabled = false;
-        } else if ((i === 5 || i === 6 || i === 7) && direction.x === -1) {
-          isXEnabled = false;
-        }
+    // for (let i = 0; i < rays.length; i += 1) {
+    //   raycaster.set(ref.current.position, rays[i]);
+    //   const intersects = raycaster.intersectObjects(ref.current.parent.children);
+    //   if (intersects.length > 0 && intersects[0].object.name !== 'fox' && intersects[0].distance < 3) {
+    //     if ((i === 0 || i === 1 || i === 7) && direction.z === 1) {
+    //       isZEnabled = false;
+    //     } else if ((i === 3 || i === 4 || i === 5) && direction.z === -1) {
+    //       isZEnabled = false;
+    //     }
+    //     if ((i === 1 || i === 2 || i === 3) && direction.x === 1) {
+    //       isXEnabled = false;
+    //     } else if ((i === 5 || i === 6 || i === 7) && direction.x === -1) {
+    //       isXEnabled = false;
+    //     }
+    //   }
+    // }
+
+    raycaster.set(ref.current.position, direction);
+    const intersects = raycaster.intersectObjects(ref.current.parent.children);
+    if (intersects.length > 0 && intersects[0].object.name !== 'fox' && intersects[0].distance < 3) {
+      if (direction.z === 1 || direction.z === -1) {
+        isZEnabled = false;
+      }
+      if (direction.x === 1 || direction.x === -1) {
+        isXEnabled = false;
       }
     }
 
@@ -125,3 +136,5 @@ export const Player = (props) => {
 
   return <Fox ref={ref} moving={moving} />;
 };
+
+export default React.memo(Player);
