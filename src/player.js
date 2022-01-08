@@ -1,7 +1,8 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { useFrame } from '@react-three/fiber';
-import { Raycaster, Vector3 } from 'three';
+import { Vector3 } from 'three';
 import { Fox } from './fox';
+import { useCompoundBody } from '@react-three/cannon';
 
 const SPEED = 0.2;
 const CAMERA_Z_DISTANCE_FROM_PLAYER = 40;
@@ -34,7 +35,18 @@ const usePlayerControls = () => {
 };
 
 const Player = (props) => {
-  const ref = useRef();
+  const colliderSphere = 1;
+  const currentPositionRef = useRef([0, colliderSphere, 0]);
+  const currentRotationRef = useRef([0, 0, 0]);
+  const [ref, api] = useCompoundBody(() => ({
+    mass: 1,
+    shapes: [
+      { type: 'Sphere', position: [0, colliderSphere, -1.5], args: [colliderSphere] },
+      { type: 'Sphere', position: [0, colliderSphere, 0], args: [colliderSphere] },
+      { type: 'Sphere', position: [0, colliderSphere, 1.5], args: [colliderSphere] },
+    ],
+  }));
+
   const last = useRef(0);
   const { forward, backward, left, right } = usePlayerControls();
   const moving = forward || backward || left || right;
@@ -44,15 +56,14 @@ const Player = (props) => {
   const frontVector = new Vector3();
   const sideVector = new Vector3();
   const direction = new Vector3();
-  const target = new Vector3();
 
   let now = 0;
   let millisecondsPerTick = 50; // 20 times per second
   let tickRate = millisecondsPerTick / 1000;
 
   const sendPlayerData = useCallback(() => {
-    if (socketClient && socketClient.id !== undefined && ref.current.position && ref.current.rotation) {
-      const playerData = { moving, id: socketClient.id, position: [...ref.current.position], rotation: [ref.current.rotation.x, ref.current.rotation.y, ref.current.rotation.z] };
+    if (socketClient && socketClient.id !== undefined && currentPositionRef.current && currentRotationRef.current) {
+      const playerData = { moving, id: socketClient.id, position: [...currentPositionRef.current], rotation: [...currentRotationRef.current] };
       socketClient.emit('player_update', playerData);
     }
   }, [socketClient, moving]);
@@ -62,66 +73,48 @@ const Player = (props) => {
     sendPlayerData();
   }, [sendPlayerData]);
 
-  const raycaster = new Raycaster();
-  const rays = [new Vector3(0, 0, 1), new Vector3(1, 0, 1), new Vector3(1, 0, 0), new Vector3(1, 0, -1), new Vector3(0, 0, -1), new Vector3(-1, 0, -1), new Vector3(-1, 0, 0), new Vector3(-1, 0, 1)];
+  useEffect(() => {
+    const unsubscribe = api.position.subscribe((p) => (currentPositionRef.current = p));
+    return unsubscribe;
+  }, [api.position]);
+
+  useEffect(() => {
+    const unsubscribe = api.rotation.subscribe((r) => (currentRotationRef.current = r));
+    return unsubscribe;
+  }, [api.rotation]);
 
   useFrame(({ camera, clock }) => {
-    // get the camera to follow the player by updating x and z coordinates
-    camera.position.setX(ref.current.position.x);
-    camera.position.setZ(ref.current.position.z + CAMERA_Z_DISTANCE_FROM_PLAYER);
+    const positionX = currentPositionRef.current[0];
+    const positionZ = currentPositionRef.current[2];
 
-    // find the players direction
+    // get the camera to follow the player by updating x and z coordinates
+    camera.position.setX(positionX);
+    camera.position.setZ(positionZ + CAMERA_Z_DISTANCE_FROM_PLAYER);
+
+    // add the SPEED to the players positional coordinates based on controls
+    let x = positionX;
+    let z = positionZ;
+    if (right) x += SPEED;
+    if (left) x -= SPEED;
+    if (forward) z -= SPEED;
+    if (backward) z += SPEED;
+    // stop any velocity from collisions
+    api.velocity.set(0, 0, 0);
+    api.angularVelocity.set(0, 0, 0);
+    // move player keeping y position set
+    api.position.set(x, 1, z);
+
+    // find the players direction and rotate
     frontVector.set(0, 0, Number(backward) - Number(forward));
     sideVector.set(Number(left) - Number(right), 0, 0);
     direction.subVectors(frontVector, sideVector);
 
-    if (direction.x !== 0 || direction.y !== 0 || direction.z !== 0) {
-      // create a target point just ahead of the player in the direction they should be moving
-      target.addVectors(ref.current.position, direction);
-      // rotate the player character to look at the target point
-      ref.current.lookAt(target);
-    }
-
-    let isXEnabled = true;
-    let isZEnabled = true;
-    // for (let i = 0; i < rays.length; i += 1) {
-    //   raycaster.set(ref.current.position, rays[i]);
-    //   const intersects = raycaster.intersectObjects(ref.current.parent.children);
-    //   if (intersects.length > 0 && intersects[0].object.name !== 'fox' && intersects[0].distance < 3) {
-    //     if ((i === 0 || i === 1 || i === 7) && direction.z === 1) {
-    //       isZEnabled = false;
-    //     } else if ((i === 3 || i === 4 || i === 5) && direction.z === -1) {
-    //       isZEnabled = false;
-    //     }
-    //     if ((i === 1 || i === 2 || i === 3) && direction.x === 1) {
-    //       isXEnabled = false;
-    //     } else if ((i === 5 || i === 6 || i === 7) && direction.x === -1) {
-    //       isXEnabled = false;
-    //     }
-    //   }
-    // }
-
-    raycaster.set(ref.current.position, direction);
-    const intersects = raycaster.intersectObjects(ref.current.parent.children);
-    if (intersects.length > 0 && intersects[0].object.name !== 'fox' && intersects[0].distance < 3) {
-      if (direction.z === 1 || direction.z === -1) {
-        isZEnabled = false;
-      }
-      if (direction.x === 1 || direction.x === -1) {
-        isXEnabled = false;
-      }
-    }
-
-    // add the SPEED to the players positional coordinates based on controls
-    if (direction.x !== 0 || direction.z !== 0) {
-      let x = ref.current.position.x;
-      let z = ref.current.position.z;
-      if (right) x += SPEED;
-      if (left) x -= SPEED;
-      if (forward) z -= SPEED;
-      if (backward) z += SPEED;
-      isXEnabled && ref.current.position.setX(x);
-      isZEnabled && ref.current.position.setZ(z);
+    // only update rotation if moving
+    if (moving) {
+      api.rotation.set(0, Math.atan2(direction.x, direction.z), 0);
+    } else {
+      // correct rotation after effects of collisions
+      api.rotation.set(0, currentRotationRef.current[1], 0);
     }
 
     // run this block at tickRate
