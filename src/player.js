@@ -38,11 +38,6 @@ export const Player = forwardRef((props, ref) => {
 
   const { socketClient, userId } = props;
 
-  let now = 0;
-  // todo: experiment with different update tick rates on client and server
-  let millisecondsPerTick = 33; // update times per second
-  let tickRate = millisecondsPerTick / 1000;
-
   const sendPlayerData = useCallback(() => {
     if (socketClient) {
       const playerData = { id: userId, controls: { forward, backward, left, right } };
@@ -54,6 +49,11 @@ export const Player = forwardRef((props, ref) => {
   useEffect(() => {
     if (moving) sendPlayerData();
   }, [moving, sendPlayerData]);
+
+  let now = 0;
+  // todo: experiment with different update tick rates on client and server
+  let millisecondsPerTick = 33; // update times per second
+  let tickRate = millisecondsPerTick / 1000;
 
   useFrame(({ camera, clock }) => {
     // get the camera to follow the player by updating x and z coordinates
