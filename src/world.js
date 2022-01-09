@@ -19,6 +19,7 @@ export const World = memo(({ userId, socketClient, worldData }) => {
         const posZ = allPlayers[userId].position.z;
         playerRef.current.position.x = posX;
         playerRef.current.position.z = posZ;
+        playerRef.current.rotation.set(0, allPlayers[userId].rotation, 0);
 
         // remote players
         let players = Object.keys(allPlayers)
@@ -35,24 +36,6 @@ export const World = memo(({ userId, socketClient, worldData }) => {
     }
   }, [socketClient, userId]);
 
-  useEffect(() => {
-    if (socketClient) {
-      socketClient.on('players', (allPlayers) => {
-        let remotePlayers = Object.keys(allPlayers)
-          .map((key, index) => {
-            if (allPlayers[key].id === userId) return null; // ignore your player data in server update
-            const playerData = allPlayers[key];
-            return <RemotePlayer key={index} moving={playerData.moving} position={playerData.position} rotation={playerData.rotation} />;
-          })
-          .filter((item) => item !== null);
-
-        if (remotePlayers.length > 0) {
-          setRemotePlayers(remotePlayers);
-        }
-      });
-    }
-  }, [userId, socketClient]);
-
   return (
     <>
       <ambientLight />
@@ -67,7 +50,7 @@ export const World = memo(({ userId, socketClient, worldData }) => {
             <OrangeTree key={index} position={{ x, z }} rotation={rotation} />
           ))}
         {/* extend the width and height of the ground material based on the world dimensions to avoid seeing the edges of the material */}
-        <Ground width={worldData.width * 2} height={worldData.height * 2} />
+        <Ground width={worldData.width} height={worldData.height} />
       </Suspense>
     </>
   );

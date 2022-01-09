@@ -1,6 +1,5 @@
 import React, { useEffect, useRef, useState, useCallback, forwardRef } from 'react';
 import { useFrame } from '@react-three/fiber';
-import { Vector3 } from 'three';
 import { Fox } from './fox';
 
 const CAMERA_Z_DISTANCE_FROM_PLAYER = 40;
@@ -39,11 +38,6 @@ export const Player = forwardRef((props, ref) => {
 
   const { socketClient, userId } = props;
 
-  const frontVector = new Vector3();
-  const sideVector = new Vector3();
-  const direction = new Vector3();
-  const target = new Vector3();
-
   let now = 0;
   // todo: experiment with different update tick rates on client and server
   let millisecondsPerTick = 33; // update times per second
@@ -58,25 +52,13 @@ export const Player = forwardRef((props, ref) => {
 
   // on mount send player coordinates
   useEffect(() => {
-    sendPlayerData();
-  }, [sendPlayerData]);
+    if (moving) sendPlayerData();
+  }, [moving, sendPlayerData]);
 
   useFrame(({ camera, clock }) => {
     // get the camera to follow the player by updating x and z coordinates
     camera.position.setX(ref.current.position.x);
     camera.position.setZ(ref.current.position.z + CAMERA_Z_DISTANCE_FROM_PLAYER);
-
-    // find the players direction and rotate
-    frontVector.set(0, 0, Number(backward) - Number(forward));
-    sideVector.set(Number(left) - Number(right), 0, 0);
-    direction.subVectors(frontVector, sideVector);
-
-    if (direction.x !== 0 || direction.y !== 0 || direction.z !== 0) {
-      // create a target point just ahead of the player in the direction they should be moving
-      target.addVectors(ref.current.position, direction);
-      // rotate the player character to look at the target point
-      ref.current.lookAt(target);
-    }
 
     // run this block at tickRate
     now = clock.getElapsedTime();
