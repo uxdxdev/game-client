@@ -8,7 +8,6 @@ import { RemotePlayer } from './remotePlayer';
 
 export const World = memo(({ userId, socketClient, worldData }) => {
   const playerRef = useRef();
-
   const [remotePlayers, setRemotePlayers] = useState([]);
 
   useEffect(() => {
@@ -26,7 +25,8 @@ export const World = memo(({ userId, socketClient, worldData }) => {
           .filter((id) => id !== userId)
           .map((key, index) => {
             const playerData = allPlayers[key];
-            return <RemotePlayer key={index} moving={playerData.moving} position={playerData.position} rotation={playerData.rotation} />;
+            const moving = playerData.controls.left || playerData.controls.right || playerData.controls.forward || playerData.controls.backward;
+            return <RemotePlayer key={index} moving={moving} position={[playerData.position.x, playerData.position.y, playerData.position.z]} rotation={[0, playerData.rotation, 0]} />;
           });
 
         if (players.length > 0) {

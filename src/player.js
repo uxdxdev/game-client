@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState, useCallback, forwardRef } from 'react';
+import React, { useEffect, useRef, useState, useCallback, forwardRef, memo } from 'react';
 import { useFrame } from '@react-three/fiber';
 import { Fox } from './fox';
 
@@ -31,44 +31,46 @@ const usePlayerControls = () => {
   return movement;
 };
 
-export const Player = forwardRef((props, ref) => {
-  const last = useRef(0);
-  const { forward, backward, left, right } = usePlayerControls();
-  const moving = forward || backward || left || right;
+export const Player = memo(
+  forwardRef((props, ref) => {
+    const last = useRef(0);
+    const { forward, backward, left, right } = usePlayerControls();
+    const moving = forward || backward || left || right;
 
-  const { socketClient, userId } = props;
+    const { socketClient, userId } = props;
 
-  const sendPlayerData = useCallback(() => {
-    if (socketClient) {
-      const playerData = { id: userId, controls: { forward, backward, left, right } };
-      socketClient.emit('player_update', playerData);
-    }
-  }, [socketClient, userId, forward, backward, left, right]);
+    const sendPlayerData = useCallback(() => {
+      if (socketClient) {
+        const playerData = { id: userId, controls: { forward, backward, left, right } };
+        socketClient.emit('player_update', playerData);
+      }
+    }, [socketClient, userId, forward, backward, left, right]);
 
-  // on mount send player coordinates
-  useEffect(() => {
-    if (moving) sendPlayerData();
-  }, [moving, sendPlayerData]);
+    // on mount send player coordinates
+    useEffect(() => {
+      if (moving) sendPlayerData();
+    }, [moving, sendPlayerData]);
 
-  let now = 0;
-  // todo: experiment with different update tick rates on client and server
-  let millisecondsPerTick = 33; // update times per second
-  let tickRate = millisecondsPerTick / 1000;
+    let now = 0;
+    // todo: experiment with different update tick rates on client and server
+    let millisecondsPerTick = 33; // update times per second
+    let tickRate = millisecondsPerTick / 1000;
 
-  useFrame(({ camera, clock }) => {
-    // get the camera to follow the player by updating x and z coordinates
-    camera.position.setX(ref.current.position.x);
-    camera.position.setZ(ref.current.position.z + CAMERA_Z_DISTANCE_FROM_PLAYER);
+    useFrame(({ camera, clock }) => {
+      // get the camera to follow the player by updating x and z coordinates
+      camera.position.setX(ref.current.position.x);
+      camera.position.setZ(ref.current.position.z + CAMERA_Z_DISTANCE_FROM_PLAYER);
 
-    // run this block at tickRate
-    now = clock.getElapsedTime();
-    if (now - last.current >= tickRate) {
-      // send player position to server
-      sendPlayerData();
-      // reset the elapsed time if it goes over our tickrate
-      last.current = now;
-    }
-  });
+      // run this block at tickRate
+      now = clock.getElapsedTime();
+      if (now - last.current >= tickRate) {
+        // send player position to server
+        sendPlayerData();
+        // reset the elapsed time if it goes over our tickrate
+        last.current = now;
+      }
+    });
 
-  return <Fox ref={ref} moving={moving} />;
-});
+    return <Fox ref={ref} moving={moving} />;
+  })
+);

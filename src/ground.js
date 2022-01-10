@@ -1,6 +1,6 @@
-import { useRef } from 'react';
+import { useRef, memo } from 'react';
 
-export const Ground = ({ width, height }) => {
+export const Ground = memo(({ width, height }) => {
   const ref = useRef();
 
   return (
@@ -9,4 +9,4 @@ export const Ground = ({ width, height }) => {
       <meshStandardMaterial color={0x7cfc00} />
     </mesh>
   );
-};
+});

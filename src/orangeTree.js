@@ -1,9 +1,9 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, memo } from 'react';
 import { useGLTF } from '@react-three/drei';
 import { useGraph } from '@react-three/fiber';
 import * as SkeletonUtils from 'three/examples/jsm/utils/SkeletonUtils';
 
-export const OrangeTree = ({ position, rotation }) => {
+export const OrangeTree = memo(({ position, rotation }) => {
   const { scene, materials } = useGLTF('/Orange tree.glb');
   const clone = useMemo(() => SkeletonUtils.clone(scene), [scene]);
   const { nodes } = useGraph(clone);
@@ -13,6 +13,6 @@ export const OrangeTree = ({ position, rotation }) => {
       <mesh position={[position.x, 0, position.z]} rotation={[0, rotation, 0]} castShadow receiveShadow geometry={nodes.OrangeTree.geometry} material={materials.OrangeTree_mat} name="tree" />
     </group>
   );
-};
+});
 
 useGLTF.preload('/Orange tree.glb');
