@@ -69,7 +69,7 @@ const App = () => {
         <button onClick={handleSocketDisconnect} disabled={!authToken || isServerAuthed === null || !isServerAuthed}>
           Disconnect from Socket.io server
         </button>
-        <div style={{ position: 'absolute', bottom: 0, left: 0, zIndex: 100 }}>{userId}</div>
+        <div style={{ position: 'absolute', bottom: 0, left: 0, zIndex: 100 }}>WASD to move around</div>
       </header>
       {/* see styles.css for canvas-container styling  */}
       <div id="canvas-container">
