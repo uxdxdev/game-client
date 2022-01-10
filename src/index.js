@@ -33,7 +33,11 @@ const App = () => {
   // get world data from server
   useEffect(() => {
     if (authToken) {
-      fetch(`${process.env.REACT_APP_SERVER_URL}/world`)
+      fetch(`${process.env.REACT_APP_SERVER_URL}/world`, {
+        headers: {
+          'auth-token': authToken,
+        },
+      })
         .then((res) => res.json())
         .then((data) => setWorldData(data.worldData))
         .catch((err) => console.log(err));
