@@ -6,6 +6,10 @@ import { Loader } from './loader';
 
 import { RemotePlayer } from './remotePlayer';
 
+const updateAngleByRadians = (angle, radians) => {
+  return radians - angle;
+};
+
 export const World = memo(({ userId, socketClient, worldData }) => {
   const playerRef = useRef();
   const [remotePlayers, setRemotePlayers] = useState([]);
@@ -18,7 +22,12 @@ export const World = memo(({ userId, socketClient, worldData }) => {
         const posZ = allPlayers[userId].position.z;
         playerRef.current.position.x = posX;
         playerRef.current.position.z = posZ;
-        playerRef.current.rotation.set(0, allPlayers[userId].rotation, 0);
+        // if a GLB model is not facing the X positive axis (to the right) we need to rotate it
+        // so that our collision detection from the server works because it's based on a direction
+        // value in radians of 0 pointing parallel to the positive X axis, see Math.atan2()
+        let modelRotation = updateAngleByRadians(allPlayers[userId].rotation, Math.PI / 2);
+
+        playerRef.current.rotation.set(0, modelRotation, 0);
 
         // remote players
         let players = Object.keys(allPlayers)
@@ -26,7 +35,8 @@ export const World = memo(({ userId, socketClient, worldData }) => {
           .map((key, index) => {
             const playerData = allPlayers[key];
             const moving = playerData.controls.left || playerData.controls.right || playerData.controls.forward || playerData.controls.backward;
-            return <RemotePlayer key={index} moving={moving} position={[playerData.position.x, playerData.position.y, playerData.position.z]} rotation={[0, playerData.rotation, 0]} />;
+            const modelRotation = updateAngleByRadians(playerData.rotation, Math.PI / 2);
+            return <RemotePlayer key={index} moving={moving} position={[playerData.position.x, playerData.position.y, playerData.position.z]} rotation={[0, modelRotation, 0]} />;
           });
 
         if (players.length > 0) {
