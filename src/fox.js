@@ -7,7 +7,7 @@ export const Fox = forwardRef((props, ref) => {
   const { scene, materials, animations } = useGLTF('/Fox.glb');
   const clone = useMemo(() => SkeletonUtils.clone(scene), [scene]);
   const { nodes } = useGraph(clone);
-  const { moving } = props;
+  const { moving, rotation, position } = props;
   const { actions } = useAnimations(animations, ref);
 
   useEffect(() => {
@@ -21,7 +21,7 @@ export const Fox = forwardRef((props, ref) => {
   }, [actions, moving]);
 
   return (
-    <group ref={ref} {...props} dispose={null} scale={[0.04, 0.04, 0.04]}>
+    <group ref={ref} position={position} rotation={[0, rotation, 0]} dispose={null} scale={[0.04, 0.04, 0.04]}>
       {/* use a group to position mesh relative to its parent physics shape */}
       <group>
         <primitive object={nodes._rootJoint} />
