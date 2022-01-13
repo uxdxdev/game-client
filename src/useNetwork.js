@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import io from 'socket.io-client';
-import { useAuth } from './auth';
+import { useAuth } from './useAuth';
 
 const events = {
   CONNECTED: 'connected',

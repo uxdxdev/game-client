@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import ReactDOM from 'react-dom';
 import { Canvas } from '@react-three/fiber';
-import { useAuth } from './auth';
-import { useNetwork } from './network';
+import { useAuth } from './useAuth';
+import { useNetwork } from './useNetwork';
 import { World } from './world';
 
 import './styles.css';

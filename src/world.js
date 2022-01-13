@@ -6,8 +6,10 @@ import { Loader } from './loader';
 import { RemotePlayer } from './remotePlayer';
 import { Vector3 } from 'three';
 import { useFrame } from '@react-three/fiber';
+import { Ground } from './ground';
 
-const CLIENT_SERVER_POSITION_DIFF = 0.2;
+const CLIENT_SERVER_POSITION_DIFF_MIN = 0.2;
+const CLIENT_SERVER_POSITION_DIFF_MAX = 10;
 const CAMERA_Z_DISTANCE_FROM_PLAYER = 40;
 const keys = {
   KeyW: 'forward',
@@ -168,14 +170,21 @@ export const World = memo(({ userId, socketClient, worldData }) => {
     if (socketClient) {
       socketClient.on('players', (allPlayers) => {
         // main player
-        const posX = allPlayers[userId].position.x;
-        const posZ = allPlayers[userId].position.z;
+        const serverPositionX = allPlayers[userId].position.x;
+        const serverPositionZ = allPlayers[userId].position.z;
 
         // interpolation
         // correct the players position based on the server data
-        if (Math.abs(playerRef.current.position.x - posX) > CLIENT_SERVER_POSITION_DIFF || Math.abs(playerRef.current.position.z - posZ) > CLIENT_SERVER_POSITION_DIFF) {
-          console.log('correcting player position...');
-          playerRef.current.position.lerp(new Vector3(posX, 0, posZ), 0.2);
+        if (Math.abs(playerRef.current.position.x - serverPositionX) > CLIENT_SERVER_POSITION_DIFF_MIN || Math.abs(playerRef.current.position.z - serverPositionZ) > CLIENT_SERVER_POSITION_DIFF_MIN) {
+          if (Math.abs(playerRef.current.position.x - serverPositionX) > CLIENT_SERVER_POSITION_DIFF_MAX || Math.abs(playerRef.current.position.z - serverPositionZ) > CLIENT_SERVER_POSITION_DIFF_MAX) {
+            // if the players positions is WAY off just reset them to the server position
+            // this will happen when a player is leaving the world and re-entering the other side
+            playerRef.current.position.x = serverPositionX;
+            playerRef.current.position.z = serverPositionZ;
+          } else {
+            // correcting player position
+            playerRef.current.position.lerp(new Vector3(serverPositionX, 0, serverPositionZ), 0.2);
+          }
         }
 
         // if a GLB model is not facing the X positive axis (to the right) we need to rotate it
@@ -217,8 +226,16 @@ export const World = memo(({ userId, socketClient, worldData }) => {
       if (backward) playerRef.current.position.z += PLAYER_SPEED;
     }
 
+    // if player leaves world boundaries position them on the other side of the world
+    // this gives the illusion that the player is running around on a sphere
+    if (playerRef.current.position.x < -worldData.width) playerRef.current.position.x = worldData.width;
+    if (playerRef.current.position.x > worldData.width) playerRef.current.position.x = -worldData.width;
+    if (playerRef.current.position.z < -worldData.depth) playerRef.current.position.z = worldData.depth;
+    if (playerRef.current.position.z > worldData.depth) playerRef.current.position.z = -worldData.depth;
+
     const modelRotation = updateAngleByRadians(rotation, Math.PI / 2);
-    playerRef.current.rotation.set(0, modelRotation, 0);
+    // only update the players rotation if moving, this preserves the rotation the player was in before releasing all keys
+    moving && playerRef.current.rotation.set(0, modelRotation, 0);
 
     // get the camera to follow the player by updating x and z coordinates
     camera.position.setX(playerRef.current.position.x);
@@ -243,15 +260,34 @@ export const World = memo(({ userId, socketClient, worldData }) => {
     }
   });
 
+  const directionalLightSizeWidth = worldData.width;
+  const directionalLightSizeDepth = worldData.depth;
+  const directionalLightHeight = worldData.height;
+  const shadowCameraDimensionsRight = directionalLightSizeWidth * 2;
+  const shadowCameraDimensionsLeft = -directionalLightSizeWidth * 2;
+  const shadowCameraDimensionsTop = directionalLightSizeDepth * 2;
+  const shadowCameraDimensionsBottom = -directionalLightSizeDepth * 2;
+  const shadowResolution = 4096;
+
   return (
     <>
       <ambientLight />
-      <directionalLight castShadow position={[40, 40, 40]} shadow-camera-left={-40 * 2} shadow-camera-right={40 * 2} shadow-camera-top={40 * 2} shadow-camera-bottom={-40 * 2} />
+      <directionalLight
+        castShadow
+        position={[directionalLightSizeWidth, directionalLightHeight, directionalLightSizeDepth]}
+        shadow-camera-right={shadowCameraDimensionsRight}
+        shadow-camera-left={shadowCameraDimensionsLeft}
+        shadow-camera-top={shadowCameraDimensionsTop}
+        shadow-camera-bottom={shadowCameraDimensionsBottom}
+        shadow-mapSize-width={shadowResolution}
+        shadow-mapSize-height={shadowResolution}
+      />
       <Suspense fallback={<Loader />}>
         <Player ref={playerRef} moving={moving} />
         {remotePlayers}
         {trees}
         {houses}
+        <Ground width={worldData.width * 3} depth={worldData.depth * 3} />
       </Suspense>
     </>
   );
