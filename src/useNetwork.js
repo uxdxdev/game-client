@@ -47,20 +47,9 @@ export const useNetwork = () => {
     }
   }, [socketClient]);
 
-  const handleSocketReconnect = () => {
-    setSocketClient(null);
-  };
-
-  const handleSocketDisconnect = () => {
-    socketClient.disconnect();
-    setIsServerAuthed(false);
-  };
-
   return {
     userId,
     socketClient,
     isServerAuthed,
-    handleSocketReconnect,
-    handleSocketDisconnect,
   };
 };

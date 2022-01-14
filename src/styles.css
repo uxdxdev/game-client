@@ -8,6 +8,16 @@ body {
   margin: 0;
 }
 
+div#buttons {
+  position: absolute;
+  z-index: 1;
+  width: 200px;
+  top: calc(50% - 100px);
+  left: calc(50% - 100px);
+  display: flex;
+  flex-direction: column;
+}
+
 #root {
   display: flex;
   flex-direction: column;

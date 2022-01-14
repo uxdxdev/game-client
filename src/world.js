@@ -7,10 +7,8 @@ import { RemotePlayer } from './remotePlayer';
 import { Vector3 } from 'three';
 import { useFrame } from '@react-three/fiber';
 import { Ground } from './ground';
+import { CAMERA_Z_DISTANCE_FROM_PLAYER } from './contants';
 
-const CLIENT_SERVER_POSITION_DIFF_MIN = 0.2;
-const CLIENT_SERVER_POSITION_DIFF_MAX = 10;
-const CAMERA_Z_DISTANCE_FROM_PLAYER = 40;
 const keys = {
   KeyW: 'forward',
   KeyS: 'backward',
@@ -153,7 +151,12 @@ export const World = memo(({ userId, socketClient, worldData }) => {
   const { forward, backward, left, right } = usePlayerControls();
   const moving = forward || backward || left || right;
   let now = 0;
-  const PLAYER_SPEED = 0.2; // player speed for interpolation
+  // player speed for interpolation
+  // this speed will change depending on network latency
+  // a higher latency will mean the server will be lagging behind and so a slower speed is needed
+  const PLAYER_SPEED = 0.22;
+  const CLIENT_SERVER_POSITION_DIFF_MIN = 2;
+  const CLIENT_SERVER_POSITION_DIFF_MAX = 5;
   let millisecondsPerTick = 33; // client tick rate for sending data to server
   let tickRate = millisecondsPerTick / 1000;
   const frontVector = new Vector3();
@@ -169,6 +172,10 @@ export const World = memo(({ userId, socketClient, worldData }) => {
   useEffect(() => {
     if (socketClient) {
       socketClient.on('players', (allPlayers) => {
+        // client ping
+        const ping = Date.now() - allPlayers[userId].timestamp;
+        document.getElementById('ping').innerText = ping;
+
         // main player
         const serverPositionX = allPlayers[userId].position.x;
         const serverPositionZ = allPlayers[userId].position.z;
@@ -181,10 +188,9 @@ export const World = memo(({ userId, socketClient, worldData }) => {
             // this will happen when a player is leaving the world and re-entering the other side
             playerRef.current.position.x = serverPositionX;
             playerRef.current.position.z = serverPositionZ;
-          } else {
-            // correcting player position
-            playerRef.current.position.lerp(new Vector3(serverPositionX, 0, serverPositionZ), 0.2);
           }
+          // correcting player position
+          playerRef.current.position.lerp(new Vector3(serverPositionX * 0.98, 0, serverPositionZ * 0.98), 0.2);
         }
 
         // if a GLB model is not facing the X positive axis (to the right) we need to rotate it
@@ -192,7 +198,9 @@ export const World = memo(({ userId, socketClient, worldData }) => {
         // value in radians of 0 pointing parallel to the positive X axis, see Math.atan2()
         // player fox model currently facing Z positive, which means it needs to be updated to face X positive
         const modelRotation = updateAngleByRadians(allPlayers[userId].rotation, Math.PI / 2);
-        playerRef.current.rotation.set(0, modelRotation, 0);
+        if (Math.abs(playerRef.current.rotation.y - modelRotation) > 1) {
+          playerRef.current.rotation.set(0, modelRotation, 0);
+        }
 
         // remote players
         let players = Object.keys(allPlayers)
