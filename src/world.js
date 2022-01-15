@@ -196,16 +196,22 @@ export const World = memo(({ userId, socketClient, worldData }) => {
           // correcting player position
           playerRef.current.position.lerp(new Vector3(serverPositionX, 0, serverPositionZ), 0.1);
 
-          // with low ping and initial player speed corrections are minimal
-          // but if corrections increase it means ping has increased and
-          // so the player speed needs to be reduced
+          // lag compensation
           const now = Date.now();
           const delta = now - prevTime.current;
-          if (delta > prevDelta.current || PLAYER_SPEED.current > PLAYER_IDEAL_SPEED) {
+          if (delta > prevDelta.current) {
+            // if corrections occur more often it's likely ping has increased so reduce player speed
             PLAYER_SPEED.current -= 0.005;
           } else {
+            // else ping has decrease to increase player speed
             PLAYER_SPEED.current += 0.005;
           }
+
+          // if player speed differs from ideal speed too much correct player speed
+          if (Math.abs(PLAYER_SPEED.current - PLAYER_IDEAL_SPEED) > 0.05) {
+            PLAYER_SPEED.current = PLAYER_IDEAL_SPEED;
+          }
+
           prevTime.current = now;
           prevDelta.current = delta;
         }
