@@ -206,7 +206,6 @@ export const World = memo(({ userId, socketClient, worldData }) => {
           } else {
             PLAYER_SPEED.current += 0.005;
           }
-          console.log(delta, PLAYER_SPEED.current);
           prevTime.current = now;
           prevDelta.current = delta;
         }
