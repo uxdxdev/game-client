@@ -151,10 +151,11 @@ export const World = memo(({ userId, socketClient, worldData }) => {
   const { forward, backward, left, right } = usePlayerControls();
   const moving = forward || backward || left || right;
   let now = 0;
-  // player speed for interpolation
-  // this speed will change depending on network latency
-  // a higher latency will mean the server will be lagging behind and so a slower speed is needed
-  const PLAYER_SPEED = useRef(0.22);
+
+  // lag compensation uses ideal speed for corrections
+  const PLAYER_IDEAL_SPEED = 0.22;
+  const PLAYER_SPEED = useRef(PLAYER_IDEAL_SPEED);
+
   const prevTime = useRef(0.0);
   const prevDelta = useRef(0.0);
 
@@ -193,18 +194,19 @@ export const World = memo(({ userId, socketClient, worldData }) => {
             playerRef.current.position.z = serverPositionZ;
           }
           // correcting player position
-          playerRef.current.position.lerp(new Vector3(serverPositionX, 0, serverPositionZ), 0.2);
+          playerRef.current.position.lerp(new Vector3(serverPositionX, 0, serverPositionZ), 0.1);
 
           // with low ping and initial player speed corrections are minimal
           // but if corrections increase it means ping has increased and
           // so the player speed needs to be reduced
           const now = Date.now();
           const delta = now - prevTime.current;
-          if (delta > prevDelta.current) {
+          if (delta > prevDelta.current || PLAYER_SPEED.current > PLAYER_IDEAL_SPEED) {
             PLAYER_SPEED.current -= 0.005;
           } else {
             PLAYER_SPEED.current += 0.005;
           }
+          console.log(delta, PLAYER_SPEED.current);
           prevTime.current = now;
           prevDelta.current = delta;
         }
