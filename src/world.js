@@ -154,7 +154,10 @@ export const World = memo(({ userId, socketClient, worldData }) => {
   // player speed for interpolation
   // this speed will change depending on network latency
   // a higher latency will mean the server will be lagging behind and so a slower speed is needed
-  const PLAYER_SPEED = 0.22;
+  const PLAYER_SPEED = useRef(0.22);
+  const prevTime = useRef(0.0);
+  const prevDelta = useRef(0.0);
+
   const CLIENT_SERVER_POSITION_DIFF_MIN = 2;
   const CLIENT_SERVER_POSITION_DIFF_MAX = 5;
   let millisecondsPerTick = 33; // client tick rate for sending data to server
@@ -173,7 +176,7 @@ export const World = memo(({ userId, socketClient, worldData }) => {
     if (socketClient) {
       socketClient.on('players', (allPlayers) => {
         // client ping
-        const ping = Date.now() - allPlayers[userId].timestamp;
+        const ping = allPlayers[userId].timestamp - Date.now();
         document.getElementById('ping').innerText = ping;
 
         // main player
@@ -190,7 +193,20 @@ export const World = memo(({ userId, socketClient, worldData }) => {
             playerRef.current.position.z = serverPositionZ;
           }
           // correcting player position
-          playerRef.current.position.lerp(new Vector3(serverPositionX * 0.98, 0, serverPositionZ * 0.98), 0.2);
+          playerRef.current.position.lerp(new Vector3(serverPositionX, 0, serverPositionZ), 0.2);
+
+          // with low ping and initial player speed corrections are minimal
+          // but if corrections increase it means ping has increased and
+          // so the player speed needs to be reduced
+          const now = Date.now();
+          const delta = now - prevTime.current;
+          if (delta > prevDelta.current) {
+            PLAYER_SPEED.current -= 0.005;
+          } else {
+            PLAYER_SPEED.current += 0.005;
+          }
+          prevTime.current = now;
+          prevDelta.current = delta;
         }
 
         // if a GLB model is not facing the X positive axis (to the right) we need to rotate it
@@ -228,10 +244,10 @@ export const World = memo(({ userId, socketClient, worldData }) => {
     const isPlayerColliding = runCollisionDetection({ position: playerRef.current.position, rotation }, worldData);
     // interpolation
     if (!isPlayerColliding) {
-      if (left) playerRef.current.position.x -= PLAYER_SPEED;
-      if (right) playerRef.current.position.x += PLAYER_SPEED;
-      if (forward) playerRef.current.position.z -= PLAYER_SPEED;
-      if (backward) playerRef.current.position.z += PLAYER_SPEED;
+      if (left) playerRef.current.position.x -= PLAYER_SPEED.current;
+      if (right) playerRef.current.position.x += PLAYER_SPEED.current;
+      if (forward) playerRef.current.position.z -= PLAYER_SPEED.current;
+      if (backward) playerRef.current.position.z += PLAYER_SPEED.current;
     }
 
     // if player leaves world boundaries position them on the other side of the world
