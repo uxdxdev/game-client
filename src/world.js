@@ -8,8 +8,9 @@ import { Vector3 } from 'three';
 import { useFrame } from '@react-three/fiber';
 import { Ground } from './ground';
 import { CAMERA_Z_DISTANCE_FROM_PLAYER } from './contants';
-// import { usePlayerControls } from './usePlayerControls';
+import { usePlayerControls } from './usePlayerControls';
 import { useJoystick } from './useJoystick';
+import { useIsMobile } from './useIsMobile';
 
 const updateAngleByRadians = (angle, radians) => {
   return radians - angle;
@@ -121,7 +122,11 @@ export const World = memo(({ userId, socketClient, worldData }) => {
   const playerRef = useRef();
   const last = useRef(0);
   const [remotePlayers, setRemotePlayers] = useState([]);
-  const { forward, backward, left, right } = useJoystick();
+  const isMobile = useIsMobile();
+  const keyboard = usePlayerControls();
+  const joystick = useJoystick();
+  const { forward, backward, left, right } = isMobile ? joystick : keyboard;
+
   const moving = forward || backward || left || right;
   let now = 0;
 

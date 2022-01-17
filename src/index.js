@@ -5,13 +5,14 @@ import { useAuth } from './useAuth';
 import { useNetwork } from './useNetwork';
 import { World } from './world';
 import { CAMERA_Z_DISTANCE_FROM_PLAYER } from './contants';
-
+import { useIsMobile } from './useIsMobile';
 import './styles.css';
 
 const App = () => {
   const [worldData, setWorldData] = useState();
   const { authToken, login, logout, userId } = useAuth();
   const { socketClient, isServerAuthed } = useNetwork();
+  const isMobile = useIsMobile();
 
   // once authenticated, ping the server to check if it's up
   useEffect(() => {
@@ -73,7 +74,7 @@ const App = () => {
       <div style={{ position: 'absolute' }}>
         ping <span id="ping">0</span>ms
       </div>
-      <div id="joystick"></div>
+      {isMobile && <div id="joystick"></div>}
     </>
   );
 };
