@@ -9,7 +9,7 @@ const events = {
 
 export const useNetwork = () => {
   const [socketClient, setSocketClient] = useState(null);
-  const [isServerAuthed, setIsServerAuthed] = useState(null);
+  const [isServerAuthed, setIsServerAuthed] = useState(false);
 
   const { authToken, userId } = useAuth();
 
@@ -42,6 +42,8 @@ export const useNetwork = () => {
   useEffect(() => {
     if (socketClient) {
       socketClient.on(events.CONNECTION_ERROR, (err) => {
+        console.log('test', err);
+
         setIsServerAuthed(false);
       });
     }

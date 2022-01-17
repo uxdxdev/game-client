@@ -8,38 +8,11 @@ import { Vector3 } from 'three';
 import { useFrame } from '@react-three/fiber';
 import { Ground } from './ground';
 import { CAMERA_Z_DISTANCE_FROM_PLAYER } from './contants';
-
-const keys = {
-  KeyW: 'forward',
-  KeyS: 'backward',
-  KeyA: 'left',
-  KeyD: 'right',
-};
+// import { usePlayerControls } from './usePlayerControls';
+import { useJoystick } from './useJoystick';
 
 const updateAngleByRadians = (angle, radians) => {
   return radians - angle;
-};
-
-const moveFieldByKey = (key) => keys[key];
-
-const usePlayerControls = () => {
-  const [movement, setMovement] = useState({
-    forward: false,
-    backward: false,
-    left: false,
-    right: false,
-  });
-  useEffect(() => {
-    const handleKeyDown = (e) => setMovement((m) => ({ ...m, [moveFieldByKey(e.code)]: true }));
-    const handleKeyUp = (e) => setMovement((m) => ({ ...m, [moveFieldByKey(e.code)]: false }));
-    document.addEventListener('keydown', handleKeyDown);
-    document.addEventListener('keyup', handleKeyUp);
-    return () => {
-      document.removeEventListener('keydown', handleKeyDown);
-      document.removeEventListener('keyup', handleKeyUp);
-    };
-  }, []);
-  return movement;
 };
 
 const runCollisionDetection = (playerData, world) => {
@@ -148,7 +121,7 @@ export const World = memo(({ userId, socketClient, worldData }) => {
   const playerRef = useRef();
   const last = useRef(0);
   const [remotePlayers, setRemotePlayers] = useState([]);
-  const { forward, backward, left, right } = usePlayerControls();
+  const { forward, backward, left, right } = useJoystick();
   const moving = forward || backward || left || right;
   let now = 0;
 

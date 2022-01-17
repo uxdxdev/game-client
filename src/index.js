@@ -35,30 +35,33 @@ const App = () => {
 
   return (
     <>
-      {!authToken && !isServerAuthed && (
-        <div id="buttons">
-          <div
-            style={{
-              backgroundColor: authToken ? 'green' : 'red',
-            }}
-          >
-            Firebase authenticated? {authToken ? 'true' : 'false'}
+      <div id="auth-container">
+        {authToken && !isServerAuthed && <div id="loading-message">Loading please wait...</div>}
+        {!authToken && (
+          <div id="buttons">
+            <div
+              style={{
+                backgroundColor: authToken ? 'green' : 'red',
+              }}
+            >
+              Firebase authenticated? {authToken ? 'true' : 'false'}
+            </div>
+            <button onClick={login} disabled={authToken}>
+              Login to Firebase
+            </button>
+            <button onClick={logout} disabled={authToken === null || !authToken}>
+              Logout of Firebase
+            </button>
+            <div
+              style={{
+                backgroundColor: isServerAuthed ? 'green' : 'red',
+              }}
+            >
+              Server authenticated? {isServerAuthed ? 'true' : 'false'}
+            </div>
           </div>
-          <button onClick={login} disabled={authToken}>
-            Login to Firebase
-          </button>
-          <button onClick={logout} disabled={authToken === null || !authToken}>
-            Logout of Firebase
-          </button>
-          <div
-            style={{
-              backgroundColor: isServerAuthed ? 'green' : 'red',
-            }}
-          >
-            Server authenticated? {isServerAuthed ? 'true' : 'false'}
-          </div>
-        </div>
-      )}
+        )}
+      </div>
       {/* see styles.css for canvas-container styling  */}
       <div id="canvas-container">
         <Canvas shadows orthographic camera={{ zoom: 40, position: [0, 40, 40] }}>
@@ -68,6 +71,7 @@ const App = () => {
       <div style={{ position: 'absolute' }}>
         ping <span id="ping">0</span>ms
       </div>
+      <div id="joystick"></div>
     </>
   );
 };
