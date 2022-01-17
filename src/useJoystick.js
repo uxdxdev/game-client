@@ -13,9 +13,8 @@ export const useJoystick = () => {
   useEffect(() => {
     const manager = nipplejs.create({
       zone: document.getElementById('joystick'),
-      color: 'blue',
       dynamicPage: true,
-      position: { bottom: '10%', left: '10%' },
+      position: { bottom: '20%', left: '15%' },
       mode: 'static',
     });
 
