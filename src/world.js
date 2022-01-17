@@ -221,30 +221,31 @@ export const World = memo(({ userId, socketClient, worldData }) => {
     direction.subVectors(frontVector, sideVector);
     const rotation = Math.atan2(direction.z, direction.x);
 
-    const isPlayerColliding = runCollisionDetection({ position: playerRef.current.position, rotation }, worldData);
-    // interpolation
-    if (!isPlayerColliding) {
-      if (left) playerRef.current.position.x -= PLAYER_SPEED.current;
-      if (right) playerRef.current.position.x += PLAYER_SPEED.current;
-      if (forward) playerRef.current.position.z -= PLAYER_SPEED.current;
-      if (backward) playerRef.current.position.z += PLAYER_SPEED.current;
+    if (playerRef.current) {
+      const isPlayerColliding = runCollisionDetection({ position: playerRef.current.position, rotation }, worldData);
+      // interpolation
+      if (!isPlayerColliding) {
+        if (left) playerRef.current.position.x -= PLAYER_SPEED.current;
+        if (right) playerRef.current.position.x += PLAYER_SPEED.current;
+        if (forward) playerRef.current.position.z -= PLAYER_SPEED.current;
+        if (backward) playerRef.current.position.z += PLAYER_SPEED.current;
+      }
+
+      // if player leaves world boundaries position them on the other side of the world
+      // this gives the illusion that the player is running around on a sphere
+      if (playerRef.current.position.x < -worldData.width) playerRef.current.position.x = worldData.width;
+      if (playerRef.current.position.x > worldData.width) playerRef.current.position.x = -worldData.width;
+      if (playerRef.current.position.z < -worldData.depth) playerRef.current.position.z = worldData.depth;
+      if (playerRef.current.position.z > worldData.depth) playerRef.current.position.z = -worldData.depth;
+
+      const modelRotation = updateAngleByRadians(rotation, Math.PI / 2);
+      // only update the players rotation if moving, this preserves the rotation the player was in before releasing all keys
+      moving && playerRef.current.rotation.set(0, modelRotation, 0);
+
+      // get the camera to follow the player by updating x and z coordinates
+      camera.position.setX(playerRef.current.position.x);
+      camera.position.setZ(playerRef.current.position.z + CAMERA_Z_DISTANCE_FROM_PLAYER);
     }
-
-    // if player leaves world boundaries position them on the other side of the world
-    // this gives the illusion that the player is running around on a sphere
-    if (playerRef.current.position.x < -worldData.width) playerRef.current.position.x = worldData.width;
-    if (playerRef.current.position.x > worldData.width) playerRef.current.position.x = -worldData.width;
-    if (playerRef.current.position.z < -worldData.depth) playerRef.current.position.z = worldData.depth;
-    if (playerRef.current.position.z > worldData.depth) playerRef.current.position.z = -worldData.depth;
-
-    const modelRotation = updateAngleByRadians(rotation, Math.PI / 2);
-    // only update the players rotation if moving, this preserves the rotation the player was in before releasing all keys
-    moving && playerRef.current.rotation.set(0, modelRotation, 0);
-
-    // get the camera to follow the player by updating x and z coordinates
-    camera.position.setX(playerRef.current.position.x);
-    camera.position.setZ(playerRef.current.position.z + CAMERA_Z_DISTANCE_FROM_PLAYER);
-
     // run this block at tickRate
     now = clock.getElapsedTime();
     if (now - last.current >= tickRate) {

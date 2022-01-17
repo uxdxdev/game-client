@@ -4,6 +4,7 @@ import { Canvas } from '@react-three/fiber';
 import { useAuth } from './useAuth';
 import { useNetwork } from './useNetwork';
 import { World } from './world';
+import { CAMERA_Z_DISTANCE_FROM_PLAYER } from './contants';
 
 import './styles.css';
 
@@ -63,8 +64,9 @@ const App = () => {
         )}
       </div>
       {/* see styles.css for canvas-container styling  */}
+
       <div id="canvas-container">
-        <Canvas shadows orthographic camera={{ zoom: 40, position: [0, 40, 40] }}>
+        <Canvas shadows orthographic camera={{ zoom: CAMERA_Z_DISTANCE_FROM_PLAYER / 2, position: [0, CAMERA_Z_DISTANCE_FROM_PLAYER, CAMERA_Z_DISTANCE_FROM_PLAYER] }}>
           {worldData && <World worldData={worldData} userId={userId} socketClient={socketClient} />}
         </Canvas>
       </div>
