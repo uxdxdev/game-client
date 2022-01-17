@@ -138,7 +138,7 @@ export const World = memo(({ userId, socketClient, worldData }) => {
   const prevDelta = useRef(0.0);
 
   const CLIENT_SERVER_POSITION_DIFF_MIN = 2;
-  const CLIENT_SERVER_POSITION_DIFF_MAX = 5;
+  const CLIENT_SERVER_POSITION_DIFF_MAX = 10;
   let millisecondsPerTick = 33; // client tick rate for sending data to server
   let tickRate = millisecondsPerTick / 1000;
   const frontVector = new Vector3();
@@ -181,7 +181,7 @@ export const World = memo(({ userId, socketClient, worldData }) => {
             // if corrections occur more often it's likely ping has increased so reduce player speed
             PLAYER_SPEED.current -= 0.005;
           } else {
-            // else ping has decrease to increase player speed
+            // else ping has decreased so increase player speed
             PLAYER_SPEED.current += 0.005;
           }
 
