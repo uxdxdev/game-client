@@ -14,7 +14,7 @@ export const useJoystick = () => {
     const manager = nipplejs.create({
       zone: document.getElementById('joystick'),
       dynamicPage: true,
-      position: { bottom: '20%', left: '15%' },
+      position: { bottom: '20%', left: '20%' },
       mode: 'static',
     });
 
